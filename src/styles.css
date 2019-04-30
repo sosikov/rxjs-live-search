@@ -1,0 +1,16 @@
+* {
+    box-sizing: border-box;
+}
+
+#search-box {
+    width: 300px;
+    padding: 6px 10px;
+    text-transform: capitalize;
+    font-size: 14px;
+    outline: none;
+    margin-bottom: 10px;
+}
+
+.item {
+    padding: 4px 0;
+}
