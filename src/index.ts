@@ -1,5 +1,5 @@
 import { fromEvent, Observable, throwError } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, filter, map, mergeMap, pluck } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter, pluck, switchMap } from 'rxjs/operators';
 import './styles.css';
 
 const searchBox: HTMLInputElement = document.getElementById('search-box') as HTMLInputElement;
@@ -12,17 +12,19 @@ type TRepo = {
     stargazers_count: number;
 };
 
-const secuence2$: Observable<any> = secuence1$.pipe( // Observable<any> ???
-    map((event: KeyboardEvent): string => (event.target as HTMLInputElement).value),
-    debounceTime(450),
-    filter((query: string) => query.length >= 3),
-    distinctUntilChanged(),
-    mergeMap((query: string) => getUsers(query)),
-    pluck('items'),
-    catchError((err) => {
-        return throwError(err);
-    })
-);
+const search = (source$: Observable<KeyboardEvent>) => {
+    return source$.pipe(
+        pluck<KeyboardEvent, string>('target', 'value'),
+        debounceTime(450),
+        distinctUntilChanged(),
+        filter((query: string) => query.length >= 3),
+        switchMap((query: string) => getUsers(query)),
+        pluck('items'),
+        catchError((err) => {
+            return throwError(err);
+        })
+    );
+};
 
 const getUsers = function(param: string): Promise<Response> {
     return fetch('https://api.github.com/search/repositories?q=' + param)
@@ -54,4 +56,5 @@ const clearItems = function(): void {
     resultContainer.innerHTML = '';
 };
 
+const secuence2$: Observable<any> = search(secuence1$);
 secuence2$.subscribe(items => renderItems(items), err => console.log('req error', err));

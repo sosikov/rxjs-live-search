@@ -97,10 +97,11 @@ __webpack_require__(201);
 var searchBox = document.getElementById('search-box');
 var resultContainer = document.getElementById('result-container');
 var secuence1$ = rxjs_1.fromEvent(searchBox, 'keyup');
-var secuence2$ = secuence1$.pipe(// Observable<any> ???
-operators_1.map(function (event) { return event.target.value; }), operators_1.debounceTime(450), operators_1.filter(function (query) { return query.length >= 3; }), operators_1.distinctUntilChanged(), operators_1.mergeMap(function (query) { return getUsers(query); }), operators_1.pluck('items'), operators_1.catchError(function (err) {
-    return rxjs_1.throwError(err);
-}));
+var search = function (source$) {
+    return source$.pipe(operators_1.pluck('target', 'value'), operators_1.debounceTime(450), operators_1.distinctUntilChanged(), operators_1.filter(function (query) { return query.length >= 3; }), operators_1.switchMap(function (query) { return getUsers(query); }), operators_1.pluck('items'), operators_1.catchError(function (err) {
+        return rxjs_1.throwError(err);
+    }));
+};
 var getUsers = function (param) {
     return fetch('https://api.github.com/search/repositories?q=' + param)
         .then(function (res) {
@@ -122,6 +123,7 @@ var renderItems = function (items) {
 var clearItems = function () {
     resultContainer.innerHTML = '';
 };
+var secuence2$ = search(secuence1$);
 secuence2$.subscribe(function (items) { return renderItems(items); }, function (err) { return console.log('req error', err); });
 
 
